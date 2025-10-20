@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FactLens – Fact vs Opinion vs Bias Detector</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <div class="inner">
+      <h1 class="logo">FactLens</h1>
+      <nav class="nav">
+        <a href="#about">About</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrapper">
+    <section class="hero">
+      <h2 class="hero__title">Instantly separate Facts, Opinions &amp; Biases</h2>
+      <p class="hero__sub">Paste a URL or text and hit Enter.</p>
+    </section>
+
+    <section class="input-area">
+      <input
+        id="urlInput"
+        type="url"
+        placeholder="Enter URL or paste text here"
+        class="input"
+      />
+      <button id="analyzeBtn" class="btn btn--primary">Analyze</button>
+    </section>
+
+    <section id="progress" class="progress hidden">
+      <span class="progress__txt">Analyzing…</span>
+      <span class="progress__bar"></span>
+    </section>
+
+    <section id="summary" class="summary hidden"></section>
+
+    <section id="results" class="results hidden">
+      <article class="card card--fact">
+        <h3>Facts</h3>
+        <ul id="factList"></ul>
+      </article>
+
+      <article class="card card--opinion">
+        <h3>Opinions</h3>
+        <ul id="opinionList"></ul>
+      </article>
+
+      <article class="card card--bias">
+        <h3>Signs of Bias</h3>
+        <ul id="biasList"></ul>
+      </article>
+
+      <article class="card card--advice">
+        <h3>Advice for Publishers</h3>
+        <p id="pubAdvice"></p>
+      </article>
+
+      <article class="card card--pr">
+        <h3>PR Response Tips</h3>
+        <p id="prAdvice"></p>
+      </article>
+
+      <article class="card card--chart">
+        <h3>Score Breakdown</h3>
+        <canvas id="radar"></canvas>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a href="#privacy">Privacy Policy</a> ·
+    <a href="#terms">Terms of Service</a>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
