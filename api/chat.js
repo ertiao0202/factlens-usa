@@ -1,16 +1,18 @@
 // api/chat.js
-// Edge function: proxies Moonshot API & keeps key server-side
-export default async function handler(req, res) {
+// Vercel Serverless Function (Node.js 18 runtime)
+module.exports = async (req, res) => {
+  // 1. 只允许 POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const body = req.body;               // { model, messages, temperature, max_tokens }
+  // 2. 读取服务端环境变量
   const apiKey = process.env.KIMI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'Server misconfigured: KIMI_API_KEY missing' });
+    return res.status(500).json({ error: 'Missing KIMI_API_KEY' });
   }
 
+  // 3. 转发给 Moonshot
   try {
     const upstream = await fetch('https://api.moonshot.cn/v1/chat/completions', {
       method: 'POST',
@@ -18,7 +20,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(req.body),
     });
 
     if (!upstream.ok) {
@@ -31,4 +33,4 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-}
+};
