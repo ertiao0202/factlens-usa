@@ -1,195 +1,27 @@
-/* FactLens front-end logic (ES-module) */
-const $   = s => document.querySelector(s);
-const url = '/api/chat';            // adjust if your edge route differs
+// api.cjs – edge function that hides your Kimi key
+// deploy as /api/chat
+export default async function handler(req, res){
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-let radarChart;
+  const KIMI_API_KEY = process.env.KIMI_API_KEY;
+  if (!KIMI_API_KEY) return res.status(500).json({ error:'Server misconfigured' });
 
-const ui = {
-  input   : $('#urlInput'),
-  btn     : $('#analyzeBtn'),
-  progress: $('#progress'),
-  summary : $('#summary'),
-  results : $('#results'),
-  fact    : $('#factList'),
-  opinion : $('#opinionList'),
-  bias    : $('#biasList'),
-  pub     : $('#pubAdvice'),
-  pr      : $('#prAdvice'),
-  radarEl : $('#radar')
-};
-
-/* ----- entry ----- */
-ui.btn.addEventListener('click', handleAnalyze);
-ui.input.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleAnalyze();
-});
-
-async function handleAnalyze(){
-  const raw = ui.input.value.trim();
-  if (!raw) return;
-  showProgress();
   try {
-    const { content, title } = await fetchContent(raw);
-    const report             = await analyzeContent(content, title);
-    render(report);
+    const upstream = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${KIMI_API_KEY}`,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify(req.body)
+    });
+    if (!upstream.ok){
+      const txt = await upstream.text();
+      return res.status(upstream.status).json({ error:txt });
+    }
+    const data = await upstream.json();
+    return res.status(200).json(data);
   } catch (e) {
-    console.error(e);
-    showSummary('We could not retrieve the page. Please paste text directly.');
+    return res.status(500).json({ error:e.message });
   }
-  hideProgress();
-}
-
-/* ----- 1. fetch ----- */
-async function fetchContent(raw){
-  if (raw.startsWith('http')){
-    const res = await fetch(`https://r.jina.ai/${encodeURIComponent(raw)}`);
-    if (!res.ok) throw new Error('fetch failed');
-    const txt = await res.text();
-    return { content: txt.slice(0, 3500), title: raw };
-  }
-  return { content: raw.slice(0, 3500), title: 'Pasted text' };
-}
-
-/* ----- 2. AI call ----- */
-async function analyzeContent(content, title){
-  const prompt = buildPrompt(content, title);
-  const body   = { model: 'moonshot-v1-8k', messages:[{role:'user', content}], temperature:0.25, max_tokens:2048 };
-  const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-  if (!res.ok) throw new Error('analysis failed');
-  const json   = await res.json();
-  return parseReport(json.choices[0].message.content);
-}
-
-/* ----- 3. prompt builder ----- */
-function buildPrompt(content, title){
-  return `Role: You are "FactLens", a fact-opinion-bias detector.
-Output MUST follow the structure below.
-
-Steps:
-1. Summarize the core message in ≤25 words.
-2. Split sentences; tag each as <fact> or <opinion>.
-3. Count bias signals: emotional words, binary opposition, mind-reading, logical fallacy.
-4. Give one actionable publisher tip.
-5. Give one 30-word PR reply.
-6. Write a 20-word overall summary.
-
-Template:
-Title: ${title}
-Credibility: X/10 (one sentence)
-
-Facts:
-1. <fact>sentence</fact>
-…
-
-Opinions:
-1. <opinion>sentence</opinion>
-…
-
-Bias:
-- Emotional words: N  eg: <eg>text</eg>
-- Binary opposition: N
-- Mind-reading: N
-- Logical fallacy: N
-- Overall stance: neutral/leaning/critical X%
-
-Publisher tip:
-xxx
-
-PR tip:
-xxx
-
-Summary:
-xxx
-
-Text:
-${content}`;
-}
-
-/* ----- 4. parse ----- */
-function parseReport(md){
-  const r = { facts:[], opinions:[], bias:{}, summary:'', publisher:'', pr:'', credibility:8 };
-  const cred = md.match(/Credibility:\s*(\d+(?:\.\d+)?)\s*\/\s*10/);
-  if (cred) r.credibility = parseFloat(cred[1]);
-
-  const fBlock = md.match(/Facts:([\s\S]*?)Opinions:/);
-  if (fBlock) r.facts = fBlock[1].split('\n').filter(l=>l.includes('<fact>')).map(l=>l.replace(/^\d+\.\s*<fact>(.*)<\/fact>.*/,'$1').trim());
-
-  const oBlock = md.match(/Opinions:([\s\S]*?)Bias:/);
-  if (oBlock) r.opinions = oBlock[1].split('\n').filter(l=>l.includes('<opinion>')).map(l=>l.replace(/^\d+\.\s*<opinion>(.*)<\/opinion>.*/,'$1').trim());
-
-  const bBlock = md.match(/Bias:([\s\S]*?)Publisher tip:/);
-  if (bBlock){
-    const b = bBlock[1];
-    r.bias = {
-      emotional : (b.match(/Emotional words:\s*(\d+)/)||[,0])[1],
-      binary    : (b.match(/Binary opposition:\s*(\d+)/)||[,0])[1],
-      mind      : (b.match(/Mind-reading:\s*(\d+)/)||[,0])[1],
-      fallacy   : (b.match(/Logical fallacy:\s*(\d+)/)||[,0])[1],
-      stance    : (b.match(/Overall stance:\s*(.+?)\s*(?:\n|$)/)||[, 'neutral 0%'])[1]
-    };
-  }
-  const pub = md.match(/Publisher tip:\s*(.+?)\s*(?:PR tip|$)/);
-  if (pub) r.publisher = pub[1].trim();
-  const pr = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
-  if (pr) r.pr = pr[1].trim();
-  const sum = md.match(/Summary:\s*(.+)/);
-  if (sum) r.summary = sum[1].trim();
-  return r;
-}
-
-/* ----- 5. render ----- */
-function render(r){
-  showSummary(r.summary);
-  list(ui.fact,    r.facts);
-  list(ui.opinion, r.opinions);
-  bias(ui.bias,    r.bias);
-  ui.pub.textContent = r.publisher;
-  ui.pr.textContent  = r.pr;
-  drawRadar([ r.credibility, r.facts.length, 10-r.bias.emotional, 8 ]);
-  ui.results.classList.remove('hidden');
-}
-
-function list(ul, arr){
-  ul.innerHTML = arr.length ? arr.map(s=>`<li>${s}</li>`).join('') : '<li>None detected</li>';
-}
-function bias(ul, b){
-  ul.innerHTML = `
-    <li>Emotional words: ${b.emotional}</li>
-    <li>Binary opposition: ${b.binary}</li>
-    <li>Mind-reading: ${b.mind}</li>
-    <li>Logical fallacy: ${b.fallacy}</li>
-    <li>Overall stance: ${b.stance}</li>
-  `;
-}
-function showSummary(txt){
-  ui.summary.textContent = txt;
-  ui.summary.classList.remove('hidden');
-}
-function showProgress(){
-  ui.progress.classList.remove('hidden');
-  ui.results.classList.add('hidden');
-  ui.summary.classList.add('hidden');
-}
-function hideProgress(){
-  ui.progress.classList.add('hidden');
-}
-
-/* ----- 6. radar ----- */
-function drawRadar(data){
-  if (window.Chart === undefined) return;
-  if (radarChart) radarChart.destroy();
-  radarChart = new Chart(ui.radarEl, {
-    type:'radar',
-    data:{
-      labels:['Credibility','Fact density','Neutrality','Consistency'],
-      datasets:[{
-        label:'Score',
-        data,
-        backgroundColor:'rgba(37,99,235,0.2)',
-        borderColor:'#2563eb',
-        pointBackgroundColor:'#2563eb'
-      }]
-    },
-    options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  });
 }
