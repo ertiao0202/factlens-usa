@@ -24,20 +24,21 @@ body{background:var(--bg);color:var(--text);line-height:1.5;}
 .input-area{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
 .input{flex:1;padding:0.75rem 1rem;border:1px solid var(--border);font-size:1rem;resize:vertical;}
 
-/* 方案 A：胶囊气泡 + 柔和阴影 */
+/* 方案 A：胶囊气泡 + 柔和阴影 + 自动增高动画 */
 .input--capsule{
   width:100%;
-  min-height:2.25rem;               /* 一行高 */
-  max-height:10rem;                 /* 约 5 行后滚动 */
+  min-height:calc(1em * 1.5 + 0.6rem * 2);     /* 1 行 + padding */
+  max-height:calc(1em * 1.5 * 5 + 0.6rem * 2); /* 约 5 行后滚动 */
   padding:0.6rem 1rem;
   border:1px solid #d1d5db;
   border-radius:1.25rem;            /* 胶囊圆角 */
+  background:#ffffff;
   resize:none;
   overflow-y:auto;
   line-height:1.5;
   font-size:1rem;
   box-shadow:0 2px 6px rgba(0,0,0,.05);
-  transition:box-shadow .2s;
+  transition:box-shadow .2s, height .15s ease-out; /* 高度动画 */
 }
 .input--capsule:focus{
   border-color:#2563eb;
