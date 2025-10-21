@@ -24,23 +24,35 @@
     </section>
 
     <section class="input-area">
-      <textarea
-        id="urlInput"
-        placeholder="Enter URL or paste text here"
-        class="input input--capsule"
-        rows="1"
-      ></textarea>
-      <!-- 修复：增加 type="button" 阻止默认提交 -->
+      <textarea id="urlInput" placeholder="Enter URL or paste text here" class="input input--capsule" rows="1"></textarea>
       <button id="analyzeBtn" class="btn btn--primary" type="button">Analyze</button>
     </section>
 
-    <!-- 修复：确保初始隐藏 -->
     <section id="progress" class="progress hidden">
       <span class="progress__txt">Analyzing…</span>
       <span class="progress__bar"></span>
     </section>
 
     <section id="summary" class="summary hidden"></section>
+
+    <!-- 骨架屏风 -->
+    <section id="skeleton" class="results">
+      <article class="card card--fact">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </article>
+      <article class="card card--opinion">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </article>
+      <article class="card card--bias">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </article>
+    </section>
 
     <section id="fourDim" class="analysis-card full-row hidden">
       <h2 class="text-2xl font-bold text-gray-900 mb-4">
