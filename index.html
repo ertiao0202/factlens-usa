@@ -70,6 +70,16 @@
         <summary class="summary__radar">View Radar Chart</summary>
         <canvas id="radar"></canvas>
       </details>
+      <!-- 信号对照表 -->
+      <details class="mt-4">
+        <summary class="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
+          信号数量 → 得分对照表
+        </summary>
+        <table class="text-sm text-gray-600 mt-2">
+          <thead><tr><th>信号总数</th><th>Emotional Neutrality</th></tr></thead>
+          <tbody id="scoreTable"></tbody>
+        </table>
+      </details>
     </section>
 
     <section id="results" class="results hidden">
