@@ -1,6 +1,6 @@
 // app.js (ES-module)
 const $   = s => document.querySelector(s);
-const url = '/api/chat';            // 同域函数，无 CORS 问题
+const url = '/api/chat';
 
 let radarChart;
 const ui = {
@@ -133,7 +133,17 @@ function render(r){
   bias(ui.bias,    r.bias);
   ui.pub.textContent = r.publisher;
   ui.pr.textContent  = r.pr;
-  drawRadar([ r.credibility, r.facts.length, 10-r.bias.emotional, 8 ]);
+
+  // 四维得分
+  const ts = Math.min(10, 0.5 + (r.credibility || 8));
+  const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
+  const eb = Math.max(0, 10 - (r.bias.emotional + r.bias.binary + r.bias.mind) * 1.2);
+  const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
+
+  // 柱状图
+  drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
+  // 雷达图
+  drawRadar([ts, fd, eb, cs]);
   ui.results.classList.remove('hidden');
 }
 
@@ -161,13 +171,24 @@ function showProgress(){
 function hideProgress(){
   ui.progress.classList.add('hidden');
 }
+function drawBars({ transparency, factDensity, emotion, consistency }){
+  const max = 10;
+  document.getElementById('tsVal').textContent = transparency.toFixed(1);
+  document.getElementById('fdVal').textContent = factDensity.toFixed(1);
+  document.getElementById('ebVal').textContent = emotion.toFixed(1);
+  document.getElementById('csVal').textContent = consistency.toFixed(1);
+  document.getElementById('tsBar').style.width = `${(transparency / max) * 100}%`;
+  document.getElementById('fdBar').style.width = `${(factDensity / max) * 100}%`;
+  document.getElementById('ebBar').style.width = `${(emotion / max) * 100}%`;
+  document.getElementById('csBar').style.width = `${(consistency / max) * 100}%`;
+}
 function drawRadar(data){
   if (window.Chart === undefined) return;
   if (radarChart) radarChart.destroy();
   radarChart = new Chart(ui.radarEl, {
     type:'radar',
     data:{
-      labels:['Credibility','Fact density','Neutrality','Consistency'],
+      labels:['Credibility','Fact Density','Neutrality','Consistency'],
       datasets:[{
         label:'Score',
         data,
