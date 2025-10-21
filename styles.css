@@ -117,4 +117,11 @@ ul{list-style:none;padding-left:0;}
 li{margin-bottom:0.5rem;padding-left:1rem;position:relative;}
 li::before{content:"";position:absolute;left:0;top:0.5em;width:5px;height:5px;background:currentColor;}
 .footer{text-align:center;padding:2rem 1rem;font-size:0.875rem;color:#6b7280;}
-.hidden{display:none}
+
+/* 置信度三色 */
+.conf-high { border-left: 4px solid #16a34a; background: #f0fdf4; }
+.conf-mid  { border-left: 4px solid #f59e0b; background: #fffbeb; }
+.conf-low  { border-left: 4px solid #dc2626; background: #fef2f2; }
+li.conf-high::before,
+li.conf-mid::before,
+li.conf-low::before { display: none; } /* 去掉默认圆点 */
