@@ -84,6 +84,10 @@ body{background:var(--bg);color:var(--text);line-height:1.5;}
 .summary__radar{margin-top:1rem;font-size:0.875rem;color:#6b7280;cursor:pointer;}
 .summary__radar:hover{color:#2563eb;}
 
+/* 信号对照表 */
+.text-sm.text-gray-500.cursor-pointer:hover{text-decoration:underline;}
+table.text-sm.text-gray-600.mt-2{width:100%;border-collapse:collapse;}
+table th,table td{padding:4px 8px;border:1px solid var(--border);text-align:center;font-size:0.75rem;}
 .results{display:grid;gap:1.5rem;grid-template-columns:1fr;}
 @media (min-width:600px){.results{grid-template-columns:repeat(2,1fr)}}
 .card{border:1px solid var(--border);padding:1.25rem;background:#fafafa;}
