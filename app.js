@@ -129,14 +129,16 @@ function parseReport(md){
 
 function render(r){
   showSummary(r.summary);
-  // 1. 4-D 横排
+  // 1. 四维得分（平方根惩罚 + 保底）
   const ts = Math.min(10, 0.5 + (r.credibility || 8));
   const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
-  const eb = Math.max(0, 10 - (r.bias.emotional + r.bias.binary + r.bias.mind) * 1.2);
+  const ebRaw = (r.bias.emotional + r.bias.binary + r.bias.mind);
+  const eb = Math.max(8, 10 - Math.sqrt(ebRaw) * 1.5);   // 中性≈9-10
   const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
+  // 2. 渲染
   drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
   drawRadar([ts, fd, eb, cs]);
-  // 2. 其余卡片
+  // 3. 其余卡片
   list(ui.fact,    r.facts);
   list(ui.opinion, r.opinions);
   bias(ui.bias,    r.bias);
@@ -198,5 +200,5 @@ function drawRadar(data){
       }]
     },
     options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  });
+  );
 }
