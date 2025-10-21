@@ -129,11 +129,11 @@ function parseReport(md){
 
 function render(r){
   showSummary(r.summary);
-  // 1. 四维得分（无保底 + 温和惩罚 1.8）
+  // 1. 四维得分（平滑 Emotional Neutrality）
   const ts = Math.min(10, 0.5 + (r.credibility || 8));
   const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
   const ebRaw = (r.bias.emotional + r.bias.binary + r.bias.mind);
-  const eb = Math.max(0, 10 - ebRaw * 1.8);   // ← 每处扣 1.8 分，官方稿≈8-9
+  const eb = smoothNeutrality(ebRaw);   // ← 平滑函数
   const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
   // 2. 渲染
   drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
@@ -146,6 +146,14 @@ function render(r){
   ui.pr.textContent  = r.pr;
   ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
+}
+
+/* 平滑中性度：0-15 处 → 10-0 分，非线性下降 */
+function smoothNeutrality(n){
+  if (n <= 2)  return 10 - n * 0.5;        // 0-2 处：9.5-10
+  if (n <= 5)  return 9   - (n - 2) * 1.2; // 3-5 处：8.6-5.4
+  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：4.8-1.2
+  return Math.max(0, 1.2 - (n - 9) * 0.15); // ≥10 处：1.2→0
 }
 
 function list(ul, arr){
