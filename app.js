@@ -251,18 +251,20 @@ function parseReport(md){
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
              .map(l => {
-               const conf = (l.match(/conf:([\d.]+)/) || [,1])[1];
+               const m = l.match(/conf:([\d.]+)/);
+               const conf = m ? parseFloat(m[1]) : 1;
                const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<fact>(.*)<\/fact>.*/, '$1').trim();
-               return { text: txt, conf: parseFloat(conf) };
+               return { text: txt, conf };
              });
   }
   if (oBlock) {
     r.opinions = oBlock[1].split('\n')
               .filter(l => l.includes('<opinion>'))
               .map(l => {
-                const conf = (l.match(/conf:([\d.]+)/) || [,1])[1];
+                const m = l.match(/conf:([\d.]+)/);
+                const conf = m ? parseFloat(m[1]) : 1;
                 const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<opinion>(.*)<\/opinion>.*/, '$1').trim();
-                return { text: txt, conf: parseFloat(conf) };
+                return { text: txt, conf };
               });
   }
   if (bBlock) {
@@ -280,32 +282,3 @@ function parseReport(md){
   if (sum) r.summary = sum[1].trim();
   return r;
 }
-
-function render(r){
-  showSummary(r.summary);
-  const ts = Math.min(10, 0.5 + (r.credibility || 8));
-  const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
-  const ebRaw = (r.bias.emotional + r.bias.binary + r.bias.mind);
-  const eb = smoothNeutrality(ebRaw);
-  const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
-  drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
-  drawRadar([ts, fd, eb, cs]);
-  listConf(ui.fact,    r.facts);
-  listConf(ui.opinion, r.opinions);
-  bias(ui.bias,    r.bias);
-  ui.pub.textContent = r.publisher;
-  ui.pr.textContent  = r.pr;
-  ui.fourDim.classList.remove('hidden');
-  ui.results.classList.remove('hidden');
-}
-
-/* ===== 事件绑定（DOM 就绪后执行一次）===== */
-document.addEventListener('DOMContentLoaded', () => {
-  ui.btn.addEventListener('click', handleAnalyze);
-  ui.input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAnalyze();
-    }
-  });
-});
