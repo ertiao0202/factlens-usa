@@ -8,6 +8,7 @@ export default async function handler(req) {
   if (!apiKey) return new Response('Missing KIMI_API_KEY', { status: 500 });
 
   try {
+    const body = await req.json();
     const upstream = await fetch('https://api.moonshot.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -15,9 +16,10 @@ export default async function handler(req) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ...req.body,
-        max_tokens: 1200,   // 输出更短
-        temperature: 0.15,  // 采样更快
+        ...body,
+        model: 'moonshot-v1-8k', // 官方公开模型
+        max_tokens: 1200,
+        temperature: 0.15,
       }),
     });
     if (!upstream.ok) {
