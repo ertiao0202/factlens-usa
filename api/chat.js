@@ -1,7 +1,7 @@
-// api/chat.js  —— 支持流式输出
-import fetch from 'node-fetch';
+// api/chat.js  —— CommonJS 版，支持流式
+const fetch = require('node-fetch');
 
-export default async (req, res) => {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
