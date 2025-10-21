@@ -67,16 +67,15 @@ function showSummary(txt){
   ui.summary.classList.remove('hidden');
 }
 
-function showProgress(){
-  ui.progress.classList.remove('hidden');
-  ui.fourDim.classList.add('hidden');
-  ui.results.classList.add('hidden');
-  ui.summary.classList.add('hidden');
-}
+/* ===== 三态切换 ===== */
+const skeleton = $('#skeleton');
+const real     = $('#results');
 
-function hideProgress(){
-  ui.progress.classList.add('hidden');
-}
+function showSkeleton(){ skeleton.classList.remove('hidden'); real.classList.add('hidden'); }
+function showReal()    { skeleton.classList.add('hidden');    real.classList.remove('hidden'); }
+
+function showProgress(){ showSkeleton(); }        // ① 骨架
+function hideProgress(){ showReal(); }            // ③ 真实
 
 function drawBars({ transparency, factDensity, emotion, consistency }){
   const max = 10;
@@ -109,7 +108,7 @@ function drawRadar(data){
   });
 }
 
-/* ===== 主流程（带锁 & 冷却）===== */
+/* ===== 主流程（带锁 & 冷却 & 流式）===== */
 async function handleAnalyze(){
   if (isAnalyzing) return;          // ① 请求锁
   const raw = ui.input.value.trim();
@@ -118,19 +117,17 @@ async function handleAnalyze(){
     return;
   }
   isAnalyzing = true;               // ② 加锁
-  showProgress();
+  showProgress();                   // ③ 骨架屏
   try {
     const { content, title } = await fetchContent(raw);
-    const report = await analyzeContent(content, title);
-    render(report);
+    await analyzeContent(content, title);   // 流式渲染
   } catch (e) {
     console.error(e);
     showSummary('We could not retrieve the page. Please paste text directly.');
-    // ③ 失败冷却，避免 429 狂刷
     await new Promise(r => setTimeout(r, COOL_DOWN));
   } finally {
     isAnalyzing = false;            // ④ 解锁
-    hideProgress();
+    hideProgress();                 // ⑤ 真实内容
   }
 }
 
@@ -144,13 +141,42 @@ async function fetchContent(raw){
   return { content: raw.slice(0, 3500), title: 'Pasted text' };
 }
 
+/* ===== 流式渲染 ===== */
 async function analyzeContent(content, title){
   const prompt = buildPrompt(content, title);
-  const body   = { model: 'moonshot-v1-8k', messages:[{role:'user', content:prompt}], temperature:0.25, max_tokens:2048 };
-  const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-  if (!res.ok) { const t = await res.text(); throw new Error(t); }
-  const json   = await res.json();
-  return parseReport(json.choices[0].message.content);
+  const body   = { model: 'moonshot-v1-8k', messages:[{role:'user', content:prompt}], temperature:0.25, max_tokens:2048, stream: true };
+
+  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!res.ok) throw new Error(await res.text());
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, {stream: true});
+    const parts = buffer.split('\n');
+    buffer = parts.pop(); // 保留不完整行
+    for (const chunk of parts) {
+      if (chunk.startsWith('data:')) {
+        const data = chunk.slice(5).trim();
+        if (data === '[DONE]') return; // 结束标记
+        try {
+          const json = JSON.parse(data);
+          const delta = json.choices[0].delta.content;
+          if (delta) await renderStream(delta); // 逐句渲染
+        } catch (e) {/* 忽略非 JSON 块 */}
+      }
+    }
+  }
+}
+
+/* 逐句渲染（先写摘要，可扩展） */
+async function renderStream(text){
+  ui.summary.textContent += text;
+  ui.summary.classList.remove('hidden');
 }
 
 function buildPrompt(content, title){
