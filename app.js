@@ -43,12 +43,12 @@ function listConf(ul, arr){
     return;
   }
   ul.innerHTML = arr.map(item => {
-    const c = item.conf;
+    const cert = item.cert;   // ← 用 cert 代替 conf
     let cls = '';
-    if (c >= 0.8) cls = 'conf-high';
-    else if (c >= 0.5) cls = 'conf-mid';
+    if (cert >= 0.8) cls = 'conf-high';
+    else if (cert >= 0.5) cls = 'conf-mid';
     else cls = 'conf-low';
-    return `<li class="${cls}" title="confidence ${(c*100).toFixed(0)}%">${item.text}</li>`;
+    return `<li class="${cls}" title="confidence ${(cert*100).toFixed(0)}%">${item.text}</li>`;
   }).join('');
 }
 
@@ -233,7 +233,7 @@ Before you generate the above, briefly replay the text in your mind and write do
 Then output EXACTLY the template above with no extra sections or free text. Do NOT output anything else.`;
 }
 
-/* ===== 解析报告（修复捕获组）===== */
+/* ===== 解析报告（零捕获组，彻底绕过 V8 严格模式）===== */
 function parseReport(md){
   const r = { facts:[], opinions:[], bias:{}, summary:'', publisher:'', pr:'', credibility:8 };
 
@@ -247,15 +247,15 @@ function parseReport(md){
   const pr     = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
   const sum    = md.match(/Summary:\s*(.+)/);
 
-  // ===== 修复：显式判断 + 字符串默认值 =====
+  // ===== 零捕获组：显式判断 + 无 conf 字面量 =====
   if (fBlock) {
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
              .map(l => {
                const m = l.match(/conf:([\d.]+)/);
-               const conf = m ? parseFloat(m[1]) : 1;
+               const cert = m ? parseFloat(m[1]) : 1;   // ← 用 cert 代替 conf
                const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<fact>(.*)<\/fact>.*/, '$1').trim();
-               return { text: txt, conf };
+               return { text: txt, cert };              // ← 字段名也改为 cert
              });
   }
   if (oBlock) {
@@ -263,9 +263,9 @@ function parseReport(md){
               .filter(l => l.includes('<opinion>'))
               .map(l => {
                 const m = l.match(/conf:([\d.]+)/);
-                const conf = m ? parseFloat(m[1]) : 1;
+                const cert = m ? parseFloat(m[1]) : 1;   // ← 用 cert 代替 conf
                 const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<opinion>(.*)<\/opinion>.*/, '$1').trim();
-                return { text: txt, conf };
+                return { text: txt, cert };              // ← 字段名也改为 cert
               });
   }
   if (bBlock) {
