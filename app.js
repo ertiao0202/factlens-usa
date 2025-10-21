@@ -146,8 +146,6 @@ function render(r){
   ui.pr.textContent  = r.pr;
   ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
-  // 4. 生成对照表
-  renderScoreTable();
 }
 
 /* 平滑中性度：0-15 处 → 10-0 分，非线性下降 */
@@ -210,15 +208,5 @@ function drawRadar(data){
       }]
     },
     options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  });
-}
-
-/* 生成信号 → 得分 对照表 */
-function renderScoreTable(){
-  const tbody = document.getElementById('scoreTable');
-  tbody.innerHTML = '';
-  for (let n = 0; n <= 15; n++) {
-    const score = smoothNeutrality(n).toFixed(1);
-    tbody.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td>${score}</td></tr>`);
-  }
+  );
 }
