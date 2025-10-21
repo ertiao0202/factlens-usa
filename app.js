@@ -247,27 +247,29 @@ function parseReport(md){
   const pr     = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
   const sum    = md.match(/Summary:\s*(.+)/);
 
-  // ===== 零捕获组：显式判断 + 无 conf 字面量 =====
+  // =====  已修复：改用普通捕获组，避免把 conf 当保留字 =====
   if (fBlock) {
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
              .map(l => {
-               const m = l.match(/conf:([\d.]+)/);
-               const cert = m ? parseFloat(m[1]) : 1;   // ← 用 cert 代替 conf
-               const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<fact>(.*)<\/fact>.*/, '$1').trim();
-               return { text: txt, cert };              // ← 字段名也改为 cert
+               const m = l.match(/^ *\d+\.\s*conf:([\d.]+)/);
+               const cert = m ? parseFloat(m[1]) : 1;
+               const txt  = l.replace(/^ *\d+\.\s*conf:[\d.]+\s*<fact>(.*?)<\/fact>.*/, '$1').trim();
+               return { text: txt, cert };
              });
   }
   if (oBlock) {
     r.opinions = oBlock[1].split('\n')
               .filter(l => l.includes('<opinion>'))
               .map(l => {
-                const m = l.match(/conf:([\d.]+)/);
-                const cert = m ? parseFloat(m[1]) : 1;   // ← 用 cert 代替 conf
-                const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<opinion>(.*)<\/opinion>.*/, '$1').trim();
-                return { text: txt, cert };              // ← 字段名也改为 cert
+                const m = l.match(/^ *\d+\.\s*conf:([\d.]+)/);
+                const cert = m ? parseFloat(m[1]) : 1;
+                const txt  = l.replace(/^ *\d+\.\s*conf:[\d.]+\s*<opinion>(.*?)<\/opinion>.*/, '$1').trim();
+                return { text: txt, cert };
               });
   }
+  // ===== 修复结束 =====
+
   if (bBlock) {
     const b = bBlock[1];
     r.bias = {
