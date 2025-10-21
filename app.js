@@ -62,15 +62,36 @@ function showSummary(txt){
   ui.summary.textContent = txt;
   ui.summary.classList.remove('hidden');
 }
+
+/* ******** 进度条优化 ******** */
+let pctTick; // 全局计时器句柄
+
 function showProgress(){
   ui.progress.classList.remove('hidden');
   ui.fourDim.classList.add('hidden');
   ui.results.classList.add('hidden');
   ui.summary.classList.add('hidden');
+
+  // 重置
+  $('#pct').textContent = '0';
+  $('#progressInner').style.width = '0%';
+
+  // 每 120 ms 前进 2%，到 99 自动停
+  let pct = 0;
+  pctTick = setInterval(() => {
+    pct += 2;
+    if (pct > 99) pct = 99;
+    $('#pct').textContent = pct;
+    $('#progressInner').style.width = pct + '%';
+  }, 120);
 }
+
 function hideProgress(){
+  clearInterval(pctTick);
   ui.progress.classList.add('hidden');
 }
+/* *************************** */
+
 function drawBars({ transparency, factDensity, emotion, consistency }){
   const max = 10;
   document.getElementById('tsVal').textContent = transparency.toFixed(1);
@@ -83,7 +104,7 @@ function drawBars({ transparency, factDensity, emotion, consistency }){
   document.getElementById('csBar').style.width = `${(consistency / max) * 100}%`;
 }
 function drawRadar(data){
-  if (typeof window.Chart === 'undefined') { console.warn('Chart.js not loaded'); return; }
+  if (typeof window.Chart === 'undefined'){ console.warn('Chart.js not loaded'); return; }
   if (radarChart) radarChart.destroy();
   radarChart = new Chart(ui.radarEl, {
     type:'radar',
@@ -108,8 +129,6 @@ async function handleAnalyze(){
   if (!raw){ hideProgress(); return; }
   isAnalyzing = true;
   showProgress();
-  let pct = 0;
-  const tick = setInterval(()=>{ pct+=12; $('#pct').textContent = Math.min(pct,99); $('#progressInner').style.width = `${pct}%`; },250);
   try {
     const { content, title } = await fetchContent(raw);
     const report = await analyzeContent(content, title);
@@ -122,8 +141,11 @@ async function handleAnalyze(){
     showSummary(msg);
     await new Promise(r => setTimeout(r, COOL_DOWN));
   } finally {
-    clearInterval(tick); $('#pct').textContent = '100'; $('#progressInner').style.width = '100%';
-    isAnalyzing = false; hideProgress();
+    clearInterval(pctTick);        // 停计时器
+    $('#pct').textContent = '100'; // 瞬间填满
+    $('#progressInner').style.width = '100%';
+    isAnalyzing = false;
+    hideProgress();
   }
 }
 async function fetchContent(raw){
