@@ -3,6 +3,10 @@ const $   = s => document.querySelector(s);
 const url = '/api/chat';
 
 let radarChart;
+// ===== 请求锁 & 冷却 =====
+let isAnalyzing = false;
+const COOL_DOWN = 1200; // ms
+
 const ui = {
   input   : $('#urlInput'),
   btn     : $('#analyzeBtn'),
@@ -105,13 +109,15 @@ function drawRadar(data){
   });
 }
 
-/* ===== 主流程 ===== */
+/* ===== 主流程（带锁 & 冷却）===== */
 async function handleAnalyze(){
+  if (isAnalyzing) return;          // ① 请求锁
   const raw = ui.input.value.trim();
   if (!raw) {
-    hideProgress();      // 空输入直接退出
+    hideProgress();
     return;
   }
+  isAnalyzing = true;               // ② 加锁
   showProgress();
   try {
     const { content, title } = await fetchContent(raw);
@@ -120,8 +126,12 @@ async function handleAnalyze(){
   } catch (e) {
     console.error(e);
     showSummary('We could not retrieve the page. Please paste text directly.');
+    // ③ 失败冷却，避免 429 狂刷
+    await new Promise(r => setTimeout(r, COOL_DOWN));
+  } finally {
+    isAnalyzing = false;            // ④ 解锁
+    hideProgress();
   }
-  hideProgress();
 }
 
 async function fetchContent(raw){
