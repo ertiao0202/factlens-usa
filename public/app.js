@@ -116,7 +116,10 @@ async function handleAnalyze(){
     render(report);
   } catch (e) {
     console.error(e);
-    showSummary('We could not retrieve the page. Please paste text directly.');
+    let msg = 'We could not retrieve the page. Please paste text directly.';
+    if (e.message.includes('timeout') || e.message.includes('504'))
+      msg = 'Too slow response (>10 s). Try pasting 2-3 paragraphs instead of the full article.';
+    showSummary(msg);
     await new Promise(r => setTimeout(r, COOL_DOWN));
   } finally {
     clearInterval(tick); $('#pct').textContent = '100'; $('#progressInner').style.width = '100%';
@@ -124,28 +127,72 @@ async function handleAnalyze(){
   }
 }
 async function fetchContent(raw){
-  if (raw.startsWith('http')){
-    const res = await fetch(`https://r.jina.ai/${encodeURIComponent(raw)}`);
-    if (!res.ok) throw new Error('fetch failed');
+  if (!raw.startsWith('http')) return { content: raw.slice(0,2000), title: 'Pasted text' };
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 6000); // 6 s 超时
+  try{
+    const res = await fetch(`https://r.jina.ai/${encodeURIComponent(raw)}`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('jina fetch failed');
     const txt = await res.text();
-    return { content: txt.slice(0, 3500), title: raw };
+    return { content: txt.slice(0, 2000), title: raw };
+  }catch(e){
+    clearTimeout(timer);
+    return { content: raw.slice(0,2000), title: 'Pasted text' }; // 降级
   }
-  return { content: raw.slice(0, 3500), title: 'Pasted text' };
 }
 async function analyzeContent(content, title){
   const prompt = `Role: You are "FactLens", a fact-opinion-bias detector.
 Output MUST follow the structure below; otherwise the parser will break.
-...
+Steps:
+1. Summarize the core message in ≤25 words.
+2. Split sentences; tag each as <fact> or <opinion>.
+   For every sentence, prepend conf:0.XX (XX=confidence 00-99, no decimals beyond 2).
+3. Count bias signals:
+   a) Emotional words: only **attack/derogatory** sentiment (exclude praise, wonder, joy).
+   b) Binary opposition: **hostile labels** (us-vs-them, enemy, evil, traitor, etc.).
+   c) Mind-reading: claims about **motives/intentions** without evidence.
+   d) Logical fallacy: classic types (slippery slope, straw man, ad hominem, etc.).
+   For each category, give **confidence 0-1** and **original snippet**.
+4. One actionable publisher tip (verb-first, ≤100 chars).
+5. One ≤30-word PR reply (with data/date/source).
+6. ≤20-word third-person summary (no "author"/"this article").
+
 Template:
 Title: ${title}
 Credibility: X/10 (one sentence)
-...
+
+Facts:
+1. conf:0.XX <fact>sentence</fact>
+…
+
+Opinions:
+1. conf:0.XX <opinion>sentence</opinion>
+…
+
+Bias:
+- Emotional words: N  conf:0.XX  eg: <eg>snippet</eg>
+- Binary opposition: N  conf:0.XX  eg: <eg>snippet</eg>
+- Mind-reading: N  conf:0.XX  eg: <eg>snippet</eg>
+- Logical fallacy: N  conf:0.XX  type:<type>slippery/straw/ad hom</type>  eg: <eg>snippet</eg>
+- Overall stance: neutral/leaning/critical X%
+
+Publisher tip:
+xxx
+
+PR tip:
+xxx
+
+Summary:
+xxx
+
 Text:
 ${content}`;
-  const body   = { model: 'moonshot-v1-8k', messages:[{role:'user', content:prompt}], temperature:0.25, max_tokens:2048 };
-  const res    = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+
+  const body = { model: 'moonshot-v1-8k', messages:[{role:'user', content:prompt}], temperature:0.15, max_tokens:1200 };
+  const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
   if (!res.ok) { const t = await res.text(); throw new Error(t); }
-  const json   = await res.json();
+  const json = await res.json();
   return parseReport(json.choices[0].message.content);
 }
 function parseReport(md){
