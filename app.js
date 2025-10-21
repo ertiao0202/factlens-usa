@@ -43,7 +43,7 @@ function listConf(ul, arr){
     return;
   }
   ul.innerHTML = arr.map(item => {
-    const cert = item.cert;   // ← 用 cert 代替 conf
+    const cert = item.cert;
     let cls = '';
     if (cert >= 0.8) cls = 'conf-high';
     else if (cert >= 0.5) cls = 'conf-mid';
@@ -74,8 +74,8 @@ const real     = $('#results');
 function showSkeleton(){ skeleton.classList.remove('hidden'); real.classList.add('hidden'); }
 function showReal()    { skeleton.classList.add('hidden');    real.classList.remove('hidden'); }
 
-function showProgress(){ showSkeleton(); }        // ① 骨架
-function hideProgress(){ showReal(); }            // ③ 真实
+function showProgress(){ showSkeleton(); }
+function hideProgress(){ showReal();    }
 
 function drawBars({ transparency, factDensity, emotion, consistency }){
   const max = 10;
@@ -110,24 +110,21 @@ function drawRadar(data){
 
 /* ===== 主流程（带锁 & 冷却 & 流式）===== */
 async function handleAnalyze(){
-  if (isAnalyzing) return;          // ① 请求锁
+  if (isAnalyzing) return;
   const raw = ui.input.value.trim();
-  if (!raw) {
-    hideProgress();                 // 空输入直接退出
-    return;
-  }
-  isAnalyzing = true;               // ② 加锁
-  showProgress();                   // ③ 骨架屏
+  if (!raw){ hideProgress(); return; }
+  isAnalyzing = true;
+  showProgress();
   try {
     const { content, title } = await fetchContent(raw);
-    await analyzeContent(content, title);   // 流式渲染
+    await analyzeContent(content, title);
   } catch (e) {
     console.error(e);
     showSummary('We could not retrieve the page. Please paste text directly.');
     await new Promise(r => setTimeout(r, COOL_DOWN));
   } finally {
-    isAnalyzing = false;            // ④ 解锁
-    hideProgress();                 // ⑤ 真实内容
+    isAnalyzing = false;
+    hideProgress();
   }
 }
 
@@ -158,36 +155,35 @@ async function analyzeContent(content, title){
     if (done) break;
     buffer += decoder.decode(value, {stream: true});
     const parts = buffer.split('\n');
-    buffer = parts.pop(); // 保留不完整行
+    buffer = parts.pop();
     for (const chunk of parts) {
       if (chunk.startsWith('data:')) {
         const data = chunk.slice(5).trim();
-        if (data === '[DONE]') return; // 结束标记
+        if (data === '[DONE]') return;
         try {
           const json = JSON.parse(data);
           const delta = json.choices[0].delta.content;
-          if (delta) await renderStream(delta); // 逐句渲染
-        } catch (e) {/* 忽略非 JSON 块 */}
+          if (delta) await renderStream(delta);
+        } catch (e) { /* ignore non-JSON */ }
       }
     }
   }
 }
 
-/* 逐句渲染（先写摘要，可扩展） */
 async function renderStream(text){
   ui.summary.textContent += text;
   ui.summary.classList.remove('hidden');
 }
 
-/* ===== 核心模板：强制逐句拆分 + 标签 ===== */
+/* ===== 核心模板 ===== */
 function buildPrompt(content, title){
   return `Role: You are "FactLens", a fact-opinion-bias detector.
 Output MUST follow the structure below; otherwise the parser will break.
 
 Steps:
 1. Summarize the core message in ≤25 words.
-2. **Split every sentence**; tag each as `<fact>` or `<opinion>`.  
-   For every sentence, prepend `conf:0.XX` (XX=confidence 00-99, no decimals beyond 2).
+2. **Split every sentence**; tag each as \`<fact>\` or \`<opinion>\`.  
+   For every sentence, prepend \`conf:0.XX\` (XX=confidence 00-99, no decimals beyond 2).
 3. Count bias signals:  
    a) Emotional words: only **attack/derogatory** sentiment (exclude praise, wonder, joy).  
    b) Binary opposition: **hostile labels** (us-vs-them, enemy, evil, traitor, etc.).  
@@ -233,7 +229,7 @@ Before you generate the above, briefly replay the text in your mind and write do
 Then output EXACTLY the template above with no extra sections or free text. Do NOT output anything else.`;
 }
 
-/* ===== 解析报告（零捕获组，彻底绕过 V8 严格模式）===== */
+/* ===== 解析报告（已修复：全部普通捕获组）===== */
 function parseReport(md){
   const r = { facts:[], opinions:[], bias:{}, summary:'', publisher:'', pr:'', credibility:8 };
 
@@ -247,7 +243,7 @@ function parseReport(md){
   const pr     = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
   const sum    = md.match(/Summary:\s*(.+)/);
 
-  // =====  已修复：改用普通捕获组，避免把 conf 当保留字 =====
+  // =====  关键修复：普通捕获组，彻底无 ?<conf  =====
   if (fBlock) {
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
@@ -268,7 +264,7 @@ function parseReport(md){
                 return { text: txt, cert };
               });
   }
-  // ===== 修复结束 =====
+  // ===========================================
 
   if (bBlock) {
     const b = bBlock[1];
