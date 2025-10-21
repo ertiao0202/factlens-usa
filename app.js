@@ -179,14 +179,15 @@ async function renderStream(text){
   ui.summary.classList.remove('hidden');
 }
 
+/* ===== 核心模板：强制逐句拆分 + 标签 ===== */
 function buildPrompt(content, title){
   return `Role: You are "FactLens", a fact-opinion-bias detector.
 Output MUST follow the structure below; otherwise the parser will break.
 
 Steps:
 1. Summarize the core message in ≤25 words.
-2. Split sentences; tag each as <fact> or <opinion>.  
-   For every sentence, prepend conf:0.XX (XX=confidence 00-99, no decimals beyond 2).
+2. **Split every sentence**; tag each as `<fact>` or `<opinion>`.  
+   For every sentence, prepend `conf:0.XX` (XX=confidence 00-99, no decimals beyond 2).
 3. Count bias signals:  
    a) Emotional words: only **attack/derogatory** sentiment (exclude praise, wonder, joy).  
    b) Binary opposition: **hostile labels** (us-vs-them, enemy, evil, traitor, etc.).  
@@ -238,6 +239,12 @@ function parseReport(md){
   if (cred) r.credibility = parseFloat(cred[1]);
 
   const fBlock = md.match(/Facts:([\s\S]*?)Opinions:/);
+  const oBlock = md.match(/Opinions:([\s\S]*?)Bias:/);
+  const bBlock = md.match(/Bias:([\s\S]*?)Publisher tip:/);
+  const pub    = md.match(/Publisher tip:\s*(.+?)\s*(?:PR tip|$)/);
+  const pr     = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
+  const sum    = md.match(/Summary:\s*(.+)/);
+
   if (fBlock) {
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
@@ -247,8 +254,6 @@ function parseReport(md){
                return { text: txt, conf: parseFloat(conf) };
              });
   }
-
-  const oBlock = md.match(/Opinions:([\s\S]*?)Bias:/);
   if (oBlock) {
     r.opinions = oBlock[1].split('\n')
               .filter(l => l.includes('<opinion>'))
@@ -258,9 +263,7 @@ function parseReport(md){
                 return { text: txt, conf: parseFloat(conf) };
               });
   }
-
-  const bBlock = md.match(/Bias:([\s\S]*?)Publisher tip:/);
-  if (bBlock){
+  if (bBlock) {
     const b = bBlock[1];
     r.bias = {
       emotional : (b.match(/Emotional words:\s*(\d+)/)||[,0])[1],
@@ -270,11 +273,8 @@ function parseReport(md){
       stance    : (b.match(/Overall stance:\s*(.+?)\s*(?:\n|$)/)||[, 'neutral 0%'])[1]
     };
   }
-  const pub = md.match(/Publisher tip:\s*(.+?)\s*(?:PR tip|$)/);
   if (pub) r.publisher = pub[1].trim();
-  const pr  = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
-  if (pr) r.pr = pr[1].trim();
-  const sum = md.match(/Summary:\s*(.+)/);
+  if (pr)  r.pr = pr[1].trim();
   if (sum) r.summary = sum[1].trim();
   return r;
 }
