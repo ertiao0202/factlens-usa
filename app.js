@@ -1,4 +1,4 @@
-// app.js (ES-module)
+// app.js
 const $   = s => document.querySelector(s);
 const url = '/api/chat';
 
@@ -8,6 +8,7 @@ const ui = {
   btn     : $('#analyzeBtn'),
   progress: $('#progress'),
   summary : $('#summary'),
+  fourDim : $('#fourDim'),
   results : $('#results'),
   fact    : $('#factList'),
   opinion : $('#opinionList'),
@@ -18,7 +19,7 @@ const ui = {
 };
 
 ui.btn.addEventListener('click', handleAnalyze);
-ui.input.addEventListener('keydown', e => { if (e.key === 'Enter') handleAnalyze(); });
+ui.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAnalyze(); } });
 
 async function handleAnalyze(){
   const raw = ui.input.value.trim();
@@ -128,22 +129,20 @@ function parseReport(md){
 
 function render(r){
   showSummary(r.summary);
+  // 1. 4-D 横排
+  const ts = Math.min(10, 0.5 + (r.credibility || 8));
+  const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
+  const eb = Math.max(0, 10 - (r.bias.emotional + r.bias.binary + r.bias.mind) * 1.2);
+  const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
+  drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
+  drawRadar([ts, fd, eb, cs]);
+  // 2. 其余卡片
   list(ui.fact,    r.facts);
   list(ui.opinion, r.opinions);
   bias(ui.bias,    r.bias);
   ui.pub.textContent = r.publisher;
   ui.pr.textContent  = r.pr;
-
-  // 四维得分
-  const ts = Math.min(10, 0.5 + (r.credibility || 8));
-  const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
-  const eb = Math.max(0, 10 - (r.bias.emotional + r.bias.binary + r.bias.mind) * 1.2);
-  const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
-
-  // 柱状图
-  drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
-  // 雷达图
-  drawRadar([ts, fd, eb, cs]);
+  ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
 }
 
@@ -165,6 +164,7 @@ function showSummary(txt){
 }
 function showProgress(){
   ui.progress.classList.remove('hidden');
+  ui.fourDim.classList.add('hidden');
   ui.results.classList.add('hidden');
   ui.summary.classList.add('hidden');
 }
