@@ -18,9 +18,6 @@ const ui = {
   radarEl : $('#radar')
 };
 
-ui.btn.addEventListener('click', handleAnalyze);
-ui.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAnalyze(); } });
-
 /* 原生自动增高 + 动画 */
 const tx = document.getElementById('urlInput');
 tx.addEventListener('input', () => {
@@ -111,11 +108,14 @@ function drawRadar(data){
 /* ===== 主流程 ===== */
 async function handleAnalyze(){
   const raw = ui.input.value.trim();
-  if (!raw) return;
+  if (!raw) {
+    hideProgress();      // 空输入直接退出
+    return;
+  }
   showProgress();
   try {
     const { content, title } = await fetchContent(raw);
-    const report             = await analyzeContent(content, title);
+    const report = await analyzeContent(content, title);
     render(report);
   } catch (e) {
     console.error(e);
@@ -260,3 +260,14 @@ function render(r){
   ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
 }
+
+/* ===== 事件绑定（DOM 就绪后执行一次）===== */
+document.addEventListener('DOMContentLoaded', () => {
+  ui.btn.addEventListener('click', handleAnalyze);
+  ui.input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAnalyze();
+    }
+  });
+});
