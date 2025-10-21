@@ -69,10 +69,15 @@ Output MUST follow the structure below.
 Steps:
 1. Summarize the core message in ≤25 words.
 2. Split sentences; tag each as <fact> or <opinion>.
-3. Count bias signals: emotional words, binary opposition, mind-reading, logical fallacy.
-4. Give one actionable publisher tip.
-5. Give one 30-word PR reply.
-6. Write a 20-word overall summary.
+3. Count bias signals:  
+   a) Emotional words: only **attack/derogatory** sentiment (exclude praise, wonder, joy).  
+   b) Binary opposition: **hostile labels** (us-vs-them, enemy, evil, traitor, etc.).  
+   c) Mind-reading: claims about **motives/intentions** without evidence.  
+   d) Logical fallacy: classic types (slippery slope, straw man, ad hominem, etc.).  
+   For each category, give **confidence 0-1** and **original snippet**.
+4. One actionable publisher tip (verb-first, ≤100 chars).
+5. One ≤30-word PR reply (with data/date/source).
+6. ≤20-word third-person summary (no "author"/"this article").
 
 Template:
 Title: ${title}
@@ -87,17 +92,17 @@ Opinions:
 …
 
 Bias:
-- Emotional words: N  eg: <eg>text</eg>
-- Binary opposition: N
-- Mind-reading: N
-- Logical fallacy: N
+- Emotional words: N  conf:0.XX  eg: <eg>snippet</eg>
+- Binary opposition: N  conf:0.XX  eg: <eg>snippet</eg>
+- Mind-reading: N  conf:0.XX  eg: <eg>snippet</eg>
+- Logical fallacy: N  conf:0.XX  type:<type>slippery/straw/ad hom</type>  eg: <eg>snippet</eg>
 - Overall stance: neutral/leaning/critical X%
 
 Publisher tip:
 xxx
 
 PR tip:
-xxx>
+xxx
 
 Summary:
 xxx
@@ -215,5 +220,5 @@ function drawRadar(data){
       }]
     },
     options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  });
+  );
 }
