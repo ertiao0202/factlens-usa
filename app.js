@@ -247,6 +247,7 @@ function parseReport(md){
   const pr     = md.match(/PR tip:\s*(.+?)\s*(?:Summary|$)/);
   const sum    = md.match(/Summary:\s*(.+)/);
 
+  // ===== 修复：显式判断 + 默认值 =====
   if (fBlock) {
     r.facts = fBlock[1].split('\n')
              .filter(l => l.includes('<fact>'))
