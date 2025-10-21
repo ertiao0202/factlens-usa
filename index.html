@@ -23,13 +23,14 @@
       <p class="hero__sub">Paste a URL or text and hit Enter.</p>
     </section>
 
+    <!-- 高输入框 + 自动换行 -->
     <section class="input-area">
-      <input
+      <textarea
         id="urlInput"
-        type="url"
-        placeholder="Enter URL or paste text here"
-        class="input"
-      />
+        placeholder="Enter URL or paste text here (auto-wrap)"
+        class="input input--multi"
+        rows="6"
+      ></textarea>
       <button id="analyzeBtn" class="btn btn--primary">Analyze</button>
     </section>
 
@@ -39,6 +40,39 @@
     </section>
 
     <section id="summary" class="summary hidden"></section>
+
+    <!-- 4-D 横排整行 -->
+    <section id="fourDim" class="analysis-card full-row hidden">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">
+        <i class="fas fa-chart-line text-blue-500 mr-2"></i>4-Dimension Breakdown
+      </h2>
+      <div class="bar-group">
+        <div class="bar-item">
+          <div class="bar-label">Source Transparency</div>
+          <div class="bar-value" id="tsVal">0</div>
+          <div class="bar-track"><div class="bar-fill" id="tsBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Fact Density</div>
+          <div class="bar-value" id="fdVal">0</div>
+          <div class="bar-track"><div class="bar-fill" id="fdBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Emotional Neutrality</div>
+          <div class="bar-value" id="ebVal">0</div>
+          <div class="bar-track"><div class="bar-fill" id="ebBar"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Consistency</div>
+          <div class="bar-value" id="csVal">0</div>
+          <div class="bar-track"><div class="bar-fill" id="csBar"></div></div>
+        </div>
+      </div>
+      <details>
+        <summary class="summary__radar">View Radar Chart</summary>
+        <canvas id="radar"></canvas>
+      </details>
+    </section>
 
     <section id="results" class="results hidden">
       <article class="card card--fact">
@@ -64,45 +98,6 @@
       <article class="card card--pr">
         <h3>PR Response Tips</h3>
         <p id="prAdvice"></p>
-      </article>
-
-      <!-- 4-D 柱状图 + 雷达图 -->
-      <article class="card card--chart">
-        <h3>4-Dimension Breakdown</h3>
-        <div class="bars">
-          <div class="bar">
-            <span class="bar__label">Source Transparency</span>
-            <span class="bar__val" id="tsVal">0</span>
-            <div class="bar__track">
-              <div class="bar__fill" id="tsBar" style="width:0%"></div>
-            </div>
-          </div>
-          <div class="bar">
-            <span class="bar__label">Fact Density</span>
-            <span class="bar__val" id="fdVal">0</span>
-            <div class="bar__track">
-              <div class="bar__fill" id="fdBar" style="width:0%"></div>
-            </div>
-          </div>
-          <div class="bar">
-            <span class="bar__label">Emotional Neutrality</span>
-            <span class="bar__val" id="ebVal">0</span>
-            <div class="bar__track">
-              <div class="bar__fill" id="ebBar" style="width:0%"></div>
-            </div>
-          </div>
-          <div class="bar">
-            <span class="bar__label">Consistency</span>
-            <span class="bar__val" id="csVal">0</span>
-            <div class="bar__track">
-              <div class="bar__fill" id="csBar" style="width:0%"></div>
-            </div>
-          </div>
-        </div>
-        <details>
-          <summary class="summary__radar">View Radar Chart</summary>
-          <canvas id="radar"></canvas>
-        </details>
       </article>
     </section>
   </main>
