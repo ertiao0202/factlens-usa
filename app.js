@@ -114,7 +114,7 @@ async function handleAnalyze(){
   if (isAnalyzing) return;          // ① 请求锁
   const raw = ui.input.value.trim();
   if (!raw) {
-    hideProgress();
+    hideProgress();                 // 空输入直接退出
     return;
   }
   isAnalyzing = true;               // ② 加锁
