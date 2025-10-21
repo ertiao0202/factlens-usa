@@ -208,5 +208,5 @@ function drawRadar(data){
       }]
     },
     options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  );
+  });
 }
