@@ -21,6 +21,13 @@ const ui = {
 ui.btn.addEventListener('click', handleAnalyze);
 ui.input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAnalyze(); } });
 
+/* 原生自动增高 + 动画 */
+const tx = document.getElementById('urlInput');
+tx.addEventListener('input', () => {
+  tx.style.height = 'auto';
+  tx.style.height = tx.scrollHeight + 'px';
+});
+
 async function handleAnalyze(){
   const raw = ui.input.value.trim();
   if (!raw) return;
@@ -90,7 +97,7 @@ Publisher tip:
 xxx
 
 PR tip:
-xxx
+xxx>
 
 Summary:
 xxx
