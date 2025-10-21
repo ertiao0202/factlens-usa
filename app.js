@@ -36,8 +36,19 @@ function smoothNeutrality(n){
   return Math.max(0, 1.2 - (n - 9) * 0.15);
 }
 
-function list(ul, arr){
-  ul.innerHTML = arr.length ? arr.map(s=>`<li>${s}</li>`).join('') : '<li>None detected</li>';
+function listConf(ul, arr){
+  if (!arr.length) {
+    ul.innerHTML = '<li>None detected</li>';
+    return;
+  }
+  ul.innerHTML = arr.map(item => {
+    const c = item.conf;
+    let cls = '';
+    if (c >= 0.8) cls = 'conf-high';
+    else if (c >= 0.5) cls = 'conf-mid';
+    else cls = 'conf-low';
+    return `<li class="${cls}" title="confidence ${(c*100).toFixed(0)}%">${item.text}</li>`;
+  }).join('');
 }
 
 function bias(ul, b){
@@ -138,7 +149,8 @@ Output MUST follow the structure below; otherwise the parser will break.
 
 Steps:
 1. Summarize the core message in ≤25 words.
-2. Split sentences; tag each as <fact> or <opinion>.
+2. Split sentences; tag each as <fact> or <opinion>.  
+   For every sentence, prepend conf:0.XX (XX=confidence 00-99, no decimals beyond 2).
 3. Count bias signals:  
    a) Emotional words: only **attack/derogatory** sentiment (exclude praise, wonder, joy).  
    b) Binary opposition: **hostile labels** (us-vs-them, enemy, evil, traitor, etc.).  
@@ -154,11 +166,11 @@ Title: ${title}
 Credibility: X/10 (one sentence)
 
 Facts:
-1. <fact>sentence</fact>
+1. conf:0.XX <fact>sentence</fact>
 …
 
 Opinions:
-1. <opinion>sentence</opinion>
+1. conf:0.XX <opinion>sentence</opinion>
 …
 
 Bias:
@@ -188,10 +200,29 @@ function parseReport(md){
   const r = { facts:[], opinions:[], bias:{}, summary:'', publisher:'', pr:'', credibility:8 };
   const cred = md.match(/Credibility:\s*(\d+(?:\.\d+)?)\s*\/\s*10/);
   if (cred) r.credibility = parseFloat(cred[1]);
+
   const fBlock = md.match(/Facts:([\s\S]*?)Opinions:/);
-  if (fBlock) r.facts = fBlock[1].split('\n').filter(l=>l.includes('<fact>')).map(l=>l.replace(/^\d+\.\s*<fact>(.*)<\/fact>.*/,'$1').trim());
+  if (fBlock) {
+    r.facts = fBlock[1].split('\n')
+             .filter(l => l.includes('<fact>'))
+             .map(l => {
+               const conf = (l.match(/conf:([\d.]+)/) || [,1])[1];
+               const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<fact>(.*)<\/fact>.*/, '$1').trim();
+               return { text: txt, conf: parseFloat(conf) };
+             });
+  }
+
   const oBlock = md.match(/Opinions:([\s\S]*?)Bias:/);
-  if (oBlock) r.opinions = oBlock[1].split('\n').filter(l=>l.includes('<opinion>')).map(l=>l.replace(/^\d+\.\s*<opinion>(.*)<\/opinion>.*/,'$1').trim());
+  if (oBlock) {
+    r.opinions = oBlock[1].split('\n')
+              .filter(l => l.includes('<opinion>'))
+              .map(l => {
+                const conf = (l.match(/conf:([\d.]+)/) || [,1])[1];
+                const txt  = l.replace(/^\d+\.\s*conf:[\d.]+\s*<opinion>(.*)<\/opinion>.*/, '$1').trim();
+                return { text: txt, conf: parseFloat(conf) };
+              });
+  }
+
   const bBlock = md.match(/Bias:([\s\S]*?)Publisher tip:/);
   if (bBlock){
     const b = bBlock[1];
@@ -221,8 +252,8 @@ function render(r){
   const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
   drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
   drawRadar([ts, fd, eb, cs]);
-  list(ui.fact,    r.facts);
-  list(ui.opinion, r.opinions);
+  listConf(ui.fact,    r.facts);
+  listConf(ui.opinion, r.opinions);
   bias(ui.bias,    r.bias);
   ui.pub.textContent = r.publisher;
   ui.pr.textContent  = r.pr;
