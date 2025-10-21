@@ -125,3 +125,8 @@ li::before{content:"";position:absolute;left:0;top:0.5em;width:5px;height:5px;ba
 li.conf-high::before,
 li.conf-mid::before,
 li.conf-low::before { display: none; } /* 去掉默认圆点 */
+
+/* 初始隐藏组件 */
+.hidden {
+  display: none !important;
+}
