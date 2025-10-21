@@ -1,30 +1,36 @@
-// api/chat.js  —— CommonJS 版，支持流式
-const fetch = require('node-fetch');
+// api/chat.js  —— CommonJS + 裸 fetch + 错误兜底
+const https = require('https');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const upstream = await fetch('https://api.moonshot.cn/v1/chat/completions', {
-    method : 'POST',
+  const body = JSON.stringify({ ...req.body, stream: true });
+  const options = {
+    hostname: 'api.moonshot.cn',
+    path: '/v1/chat/completions',
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.KIMI_API_KEY}`,
       'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
     },
-    body: JSON.stringify({ ...req.body, stream: true }), // 强制流式
+  };
+
+  const upstream = https.request(options, (upRes) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    upRes.on('data', chunk => res.write(chunk));
+    upRes.on('end', () => res.end());
   });
 
-  if (!upstream.ok) {
-    const text = await upstream.text();
-    return res.status(upstream.status).send(text);
-  }
+  upstream.on('error', (e) => {
+    console.error(e);
+    res.status(500).json({ error: 'Upstream failed' });
+  });
 
-  // 逐块转发，保持 SSE 格式
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  upstream.body.on('data', chunk => res.write(chunk));
-  upstream.body.on('end', () => res.end());
+  upstream.write(body);
+  upstream.end();
 };
