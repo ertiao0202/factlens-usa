@@ -72,17 +72,15 @@ function showProgress(){
   ui.results.classList.add('hidden');
   ui.summary.classList.add('hidden');
 
-  // 重置
   $('#pct').textContent = '0';
   $('#progressInner').style.width = '0%';
 
-  // 每 120 ms 前进 2%，到 99 自动停
   let pct = 0;
   pctTick = setInterval(() => {
     pct += 2;
-    if (pct > 99) pct = 99;
+    if (pct > 99) pct = 99;               // 刹车
     $('#pct').textContent = pct;
-    $('#progressInner').style.width = pct + '%';
+    $('#progressInner').style.width = Math.min(pct, 100) + '%'; // 不超100
   }, 120);
 }
 
@@ -141,8 +139,8 @@ async function handleAnalyze(){
     showSummary(msg);
     await new Promise(r => setTimeout(r, COOL_DOWN));
   } finally {
-    clearInterval(pctTick);        // 停计时器
-    $('#pct').textContent = '100'; // 瞬间填满
+    clearInterval(pctTick);
+    $('#pct').textContent = '100';
     $('#progressInner').style.width = '100%';
     isAnalyzing = false;
     hideProgress();
