@@ -126,6 +126,21 @@ li.conf-high::before,
 li.conf-mid::before,
 li.conf-low::before { display: none; } /* 去掉默认圆点 */
 
+/* ===== 骨架屏 ===== */
+.skeleton-header,
+.skeleton-line{
+  background: #e0e0e0;
+  border-radius: 4px;
+  height: 20px;
+  margin-bottom: 8px;
+  animation: pulse 1s ease-in-out infinite;
+}
+.skeleton-header{width:40%;height:24px;}
+@keyframes pulse{
+  0%,100%{opacity:1}
+  50%{opacity:.4}
+}
+
 /* 初始隐藏组件 */
 .hidden {
   display: none !important;
