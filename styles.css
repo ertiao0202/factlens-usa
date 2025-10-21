@@ -23,12 +23,28 @@ body{background:var(--bg);color:var(--text);line-height:1.5;}
 .hero__sub{font-size:1.125rem;color:#6b7280;}
 .input-area{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
 .input{flex:1;padding:0.75rem 1rem;border:1px solid var(--border);font-size:1rem;resize:vertical;}
-.input--auto{
-  min-height:2.25rem;                 /* 一行高 */
-  max-height:10rem;                  /* 最多约 5 行后滚动 */
+
+/* 方案 A：胶囊气泡 + 柔和阴影 */
+.input--capsule{
+  width:100%;
+  min-height:2.25rem;               /* 一行高 */
+  max-height:10rem;                 /* 约 5 行后滚动 */
+  padding:0.6rem 1rem;
+  border:1px solid #d1d5db;
+  border-radius:1.25rem;            /* 胶囊圆角 */
+  resize:none;
   overflow-y:auto;
   line-height:1.5;
+  font-size:1rem;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+  transition:box-shadow .2s;
 }
+.input--capsule:focus{
+  border-color:#2563eb;
+  box-shadow:0 4px 12px rgba(37,99,235,.15);
+  outline:none;
+}
+
 .btn{padding:0.75rem 1.5rem;border:1px solid var(--border);background:var(--bg);font-size:1rem;cursor:pointer;}
 .btn--primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 .btn--primary:hover{opacity:0.9;}
