@@ -193,32 +193,3 @@ function showProgress(){
 function hideProgress(){
   ui.progress.classList.add('hidden');
 }
-function drawBars({ transparency, factDensity, emotion, consistency }){
-  const max = 10;
-  document.getElementById('tsVal').textContent = transparency.toFixed(1);
-  document.getElementById('fdVal').textContent = factDensity.toFixed(1);
-  document.getElementById('ebVal').textContent = emotion.toFixed(1);
-  document.getElementById('csVal').textContent = consistency.toFixed(1);
-  document.getElementById('tsBar').style.width = `${(transparency / max) * 100}%`;
-  document.getElementById('fdBar').style.width = `${(factDensity / max) * 100}%`;
-  document.getElementById('ebBar').style.width = `${(emotion / max) * 100}%`;
-  document.getElementById('csBar').style.width = `${(consistency / max) * 100}%`;
-}
-function drawRadar(data){
-  if (window.Chart === undefined) return;
-  if (radarChart) radarChart.destroy();
-  radarChart = new Chart(ui.radarEl, {
-    type:'radar',
-    data:{
-      labels:['Credibility','Fact Density','Neutrality','Consistency'],
-      datasets:[{
-        label:'Score',
-        data,
-        backgroundColor:'rgba(37,99,235,0.2)',
-        borderColor:'#2563eb',
-        pointBackgroundColor:'#2563eb'
-      }]
-    },
-    options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
-  );
-}
