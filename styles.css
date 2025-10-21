@@ -44,3 +44,17 @@ li{margin-bottom:0.5rem;padding-left:1rem;position:relative;}
 li::before{content:"";position:absolute;left:0;top:0.5em;width:5px;height:5px;background:currentColor;}
 .footer{text-align:center;padding:2rem 1rem;font-size:0.875rem;color:#6b7280;}
 .hidden{display:none}
+
+/* 4 维柱状图 */
+.bars{display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;}
+.bar{display:grid;grid-template-columns:160px 1fr 40px;align-items:center;gap:0.5rem;font-size:0.875rem;}
+.bar__label{color:#374151;}
+.bar__val{text-align:right;font-weight:600;color:#111827;}
+.bar__track{height:8px;background:#e5e7eb;border-radius:0;}
+.bar__fill{height:8px;border-radius:0;transition:width .3s ease;}
+#tsBar{background:#2563eb;}
+#fdBar{background:#16a34a;}
+#ebBar{background:#f59e0b;}
+#csBar{background:#9333ea;}
+.summary__radar{margin-top:1rem;font-size:0.875rem;color:#6b7280;cursor:pointer;}
+.summary__radar:hover{color:#2563eb;}
