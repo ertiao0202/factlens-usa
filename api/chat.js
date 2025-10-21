@@ -1,27 +1,34 @@
-// api/chat.js
-module.exports = async (req, res) => {
+export const config = { runtime: 'edge' };
+
+export default async function handler(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return new Response('Method Not Allowed', { status: 405 });
   }
   const apiKey = process.env.KIMI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'Missing KIMI_API_KEY' });
+  if (!apiKey) return new Response('Missing KIMI_API_KEY', { status: 500 });
 
   try {
     const upstream = await fetch('https://api.moonshot.cn/v1/chat/completions', {
-      method : 'POST',
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify({
+        ...req.body,
+        max_tokens: 1200,   // 输出更短
+        temperature: 0.15,  // 采样更快
+      }),
     });
     if (!upstream.ok) {
       const text = await upstream.text();
-      return res.status(upstream.status).json({ error: text });
+      return new Response(text, { status: upstream.status });
     }
     const data = await upstream.json();
-    return res.status(200).json(data);
+    return new Response(JSON.stringify(data), {
+      headers: { 'content-type': 'application/json' },
+    });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return new Response(err.message, { status: 500 });
   }
-};
+}
