@@ -28,17 +28,18 @@ tx.addEventListener('input', () => {
   tx.style.height = tx.scrollHeight + 'px';
 });
 
-/* ===== 工具函数（提前，避免引用错误） ===== */
+/* ===== 工具函数 ===== */
 function smoothNeutrality(n){
-  if (n <= 2)  return 10 - n * 0.5;        // 0-2 处：9.5-10
-  if (n <= 5)  return 9   - (n - 2) * 1.2; // 3-5 处：8.6-5.4
-  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：5-1.2
-  return Math.max(0, 1.2 - (n - 9) * 0.15); // ≥10 处：1.2→0
+  if (n <= 2)  return 10 - n * 0.5;
+  if (n <= 5)  return 9   - (n - 2) * 1.2;
+  if (n <= 9)  return 5.4 - (n - 5) * 0.9;
+  return Math.max(0, 1.2 - (n - 9) * 0.15);
 }
 
 function list(ul, arr){
   ul.innerHTML = arr.length ? arr.map(s=>`<li>${s}</li>`).join('') : '<li>None detected</li>';
 }
+
 function bias(ul, b){
   ul.innerHTML = `
     <li>Emotional words: ${b.emotional}</li>
@@ -48,19 +49,23 @@ function bias(ul, b){
     <li>Overall stance: ${b.stance}</li>
   `;
 }
+
 function showSummary(txt){
   ui.summary.textContent = txt;
   ui.summary.classList.remove('hidden');
 }
+
 function showProgress(){
   ui.progress.classList.remove('hidden');
   ui.fourDim.classList.add('hidden');
   ui.results.classList.add('hidden');
   ui.summary.classList.add('hidden');
 }
+
 function hideProgress(){
   ui.progress.classList.add('hidden');
 }
+
 function drawBars({ transparency, factDensity, emotion, consistency }){
   const max = 10;
   document.getElementById('tsVal').textContent = transparency.toFixed(1);
@@ -72,8 +77,9 @@ function drawBars({ transparency, factDensity, emotion, consistency }){
   document.getElementById('ebBar').style.width = `${(emotion / max) * 100}%`;
   document.getElementById('csBar').style.width = `${(consistency / max) * 100}%`;
 }
+
 function drawRadar(data){
-  if (window.Chart === undefined) return;
+  if (typeof window.Chart === 'undefined') { console.warn('Chart.js not loaded'); return; }
   if (radarChart) radarChart.destroy();
   radarChart = new Chart(ui.radarEl, {
     type:'radar',
@@ -205,16 +211,13 @@ function parseReport(md){
 
 function render(r){
   showSummary(r.summary);
-  // 1. 四维得分（平滑 Emotional Neutrality）
   const ts = Math.min(10, 0.5 + (r.credibility || 8));
   const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
   const ebRaw = (r.bias.emotional + r.bias.binary + r.bias.mind);
-  const eb = smoothNeutrality(ebRaw);   // ← 平滑函数
+  const eb = smoothNeutrality(ebRaw);
   const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
-  // 2. 渲染
   drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
   drawRadar([ts, fd, eb, cs]);
-  // 3. 其余卡片
   list(ui.fact,    r.facts);
   list(ui.opinion, r.opinions);
   bias(ui.bias,    r.bias);
@@ -222,38 +225,4 @@ function render(r){
   ui.pr.textContent  = r.pr;
   ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
-}
-
-/* 平滑中性度：0-15 处 → 10-0 分，非线性下降 */
-function smoothNeutrality(n){
-  if (n <= 2)  return 10 - n * 0.5;        // 0-2 处：9.5-10
-  if (n <= 5)  return 9   - (n - 2) * 1.2; // 3-5 处：8.6-5.4
-  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：5-1.2
-  return Math.max(0, 1.2 - (n - 9) * 0.15); // ≥10 处：1.2→0
-}
-
-function list(ul, arr){
-  ul.innerHTML = arr.length ? arr.map(s=>`<li>${s}</li>`).join('') : '<li>None detected</li>';
-}
-function bias(ul, b){
-  ul.innerHTML = `
-    <li>Emotional words: ${b.emotional}</li>
-    <li>Binary opposition: ${b.binary}</li>
-    <li>Mind-reading: ${b.mind}</li>
-    <li>Logical fallacy: ${b.fallacy}</li>
-    <li>Overall stance: ${b.stance}</li>
-  `;
-}
-function showSummary(txt){
-  ui.summary.textContent = txt;
-  ui.summary.classList.remove('hidden');
-}
-function showProgress(){
-  ui.progress.classList.remove('hidden');
-  ui.fourDim.classList.add('hidden');
-  ui.results.classList.add('hidden');
-  ui.summary.classList.add('hidden');
-}
-function hideProgress(){
-  ui.progress.classList.add('hidden');
 }
