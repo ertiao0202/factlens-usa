@@ -146,13 +146,15 @@ function render(r){
   ui.pr.textContent  = r.pr;
   ui.fourDim.classList.remove('hidden');
   ui.results.classList.remove('hidden');
+  // 4. 生成对照表
+  renderScoreTable();
 }
 
 /* 平滑中性度：0-15 处 → 10-0 分，非线性下降 */
 function smoothNeutrality(n){
   if (n <= 2)  return 10 - n * 0.5;        // 0-2 处：9.5-10
   if (n <= 5)  return 9   - (n - 2) * 1.2; // 3-5 处：8.6-5.4
-  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：4.8-1.2
+  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：5-1.2
   return Math.max(0, 1.2 - (n - 9) * 0.15); // ≥10 处：1.2→0
 }
 
@@ -209,4 +211,14 @@ function drawRadar(data){
     },
     options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
   });
+}
+
+/* 生成信号 → 得分 对照表 */
+function renderScoreTable(){
+  const tbody = document.getElementById('scoreTable');
+  tbody.innerHTML = '';
+  for (let n = 0; n <= 15; n++) {
+    const score = smoothNeutrality(n).toFixed(1);
+    tbody.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td>${score}</td></tr>`);
+  }
 }
