@@ -28,6 +28,70 @@ tx.addEventListener('input', () => {
   tx.style.height = tx.scrollHeight + 'px';
 });
 
+/* ===== 工具函数（提前，避免引用错误） ===== */
+function smoothNeutrality(n){
+  if (n <= 2)  return 10 - n * 0.5;        // 0-2 处：9.5-10
+  if (n <= 5)  return 9   - (n - 2) * 1.2; // 3-5 处：8.6-5.4
+  if (n <= 9)  return 5.4 - (n - 5) * 0.9; // 6-9 处：5-1.2
+  return Math.max(0, 1.2 - (n - 9) * 0.15); // ≥10 处：1.2→0
+}
+
+function list(ul, arr){
+  ul.innerHTML = arr.length ? arr.map(s=>`<li>${s}</li>`).join('') : '<li>None detected</li>';
+}
+function bias(ul, b){
+  ul.innerHTML = `
+    <li>Emotional words: ${b.emotional}</li>
+    <li>Binary opposition: ${b.binary}</li>
+    <li>Mind-reading: ${b.mind}</li>
+    <li>Logical fallacy: ${b.fallacy}</li>
+    <li>Overall stance: ${b.stance}</li>
+  `;
+}
+function showSummary(txt){
+  ui.summary.textContent = txt;
+  ui.summary.classList.remove('hidden');
+}
+function showProgress(){
+  ui.progress.classList.remove('hidden');
+  ui.fourDim.classList.add('hidden');
+  ui.results.classList.add('hidden');
+  ui.summary.classList.add('hidden');
+}
+function hideProgress(){
+  ui.progress.classList.add('hidden');
+}
+function drawBars({ transparency, factDensity, emotion, consistency }){
+  const max = 10;
+  document.getElementById('tsVal').textContent = transparency.toFixed(1);
+  document.getElementById('fdVal').textContent = factDensity.toFixed(1);
+  document.getElementById('ebVal').textContent = emotion.toFixed(1);
+  document.getElementById('csVal').textContent = consistency.toFixed(1);
+  document.getElementById('tsBar').style.width = `${(transparency / max) * 100}%`;
+  document.getElementById('fdBar').style.width = `${(factDensity / max) * 100}%`;
+  document.getElementById('ebBar').style.width = `${(emotion / max) * 100}%`;
+  document.getElementById('csBar').style.width = `${(consistency / max) * 100}%`;
+}
+function drawRadar(data){
+  if (window.Chart === undefined) return;
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(ui.radarEl, {
+    type:'radar',
+    data:{
+      labels:['Credibility','Fact Density','Neutrality','Consistency'],
+      datasets:[{
+        label:'Score',
+        data,
+        backgroundColor:'rgba(37,99,235,0.2)',
+        borderColor:'#2563eb',
+        pointBackgroundColor:'#2563eb'
+      }]
+    },
+    options:{ scales:{ r:{ suggestedMin:0, suggestedMax:10 } }, plugins:{ legend:{ display:false } } }
+  });
+}
+
+/* ===== 主流程 ===== */
 async function handleAnalyze(){
   const raw = ui.input.value.trim();
   if (!raw) return;
