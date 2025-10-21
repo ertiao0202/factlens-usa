@@ -66,9 +66,43 @@
         <p id="prAdvice"></p>
       </article>
 
+      <!-- 4-D 柱状图 + 雷达图 -->
       <article class="card card--chart">
-        <h3>Score Breakdown</h3>
-        <canvas id="radar"></canvas>
+        <h3>4-Dimension Breakdown</h3>
+        <div class="bars">
+          <div class="bar">
+            <span class="bar__label">Source Transparency</span>
+            <span class="bar__val" id="tsVal">0</span>
+            <div class="bar__track">
+              <div class="bar__fill" id="tsBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bar">
+            <span class="bar__label">Fact Density</span>
+            <span class="bar__val" id="fdVal">0</span>
+            <div class="bar__track">
+              <div class="bar__fill" id="fdBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bar">
+            <span class="bar__label">Emotional Neutrality</span>
+            <span class="bar__val" id="ebVal">0</span>
+            <div class="bar__track">
+              <div class="bar__fill" id="ebBar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="bar">
+            <span class="bar__label">Consistency</span>
+            <span class="bar__val" id="csVal">0</span>
+            <div class="bar__track">
+              <div class="bar__fill" id="csBar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <details>
+          <summary class="summary__radar">View Radar Chart</summary>
+          <canvas id="radar"></canvas>
+        </details>
       </article>
     </section>
   </main>
