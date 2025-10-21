@@ -233,8 +233,10 @@ Before you generate the above, briefly replay the text in your mind and write do
 Then output EXACTLY the template above with no extra sections or free text. Do NOT output anything else.`;
 }
 
+/* ===== 解析报告（修复捕获组）===== */
 function parseReport(md){
   const r = { facts:[], opinions:[], bias:{}, summary:'', publisher:'', pr:'', credibility:8 };
+
   const cred = md.match(/Credibility:\s*(\d+(?:\.\d+)?)\s*\/\s*10/);
   if (cred) r.credibility = parseFloat(cred[1]);
 
