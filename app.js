@@ -129,11 +129,11 @@ function parseReport(md){
 
 function render(r){
   showSummary(r.summary);
-  // 1. 四维得分（无保底 + 高惩罚）
+  // 1. 四维得分（无保底 + 温和惩罚 1.8）
   const ts = Math.min(10, 0.5 + (r.credibility || 8));
   const fd = Math.min(10, 1.5 + (r.facts.length || 0) * 1.8);
   const ebRaw = (r.bias.emotional + r.bias.binary + r.bias.mind);
-  const eb = Math.max(0, 10 - ebRaw * 2.5);   // 每处扣 2.5 分，可降到 0
+  const eb = Math.max(0, 10 - ebRaw * 1.8);   // ← 每处扣 1.8 分，官方稿≈8-9
   const cs = Math.min(10, 0.5 + (ts + fd + eb) / 3);
   // 2. 渲染
   drawBars({ transparency: ts, factDensity: fd, emotion: eb, consistency: cs });
