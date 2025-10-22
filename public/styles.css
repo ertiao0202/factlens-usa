@@ -1,20 +1,23 @@
-/* ====== 进度条修复（你已有） ====== */
+/* ====== 进度条彻底修复：去掉 flex 拉伸 ====== */
+.progress{
+  display:inline-block;    /* 关键：不再拉伸 */
+  width:480px;             /* 固定宽度 */
+  max-width:100%;          /* 手机端自适应 */
+  margin-bottom:1.5rem;
+}
 .progress__bar{
-  width: 480px;          /* 固定宽度，不再贯穿屏幕 */
-  max-width: 100%;       /* 移动端自适应 */
-  height: 4px;
-  background: #e5e7eb;
-  position: relative;
-  border-radius: 4px;
-  overflow: hidden;      /* 切断溢出 */
+  height:4px;
+  background:#e5e7eb;
+  border-radius:4px;
+  overflow:hidden;
 }
 #progressInner{
-  height: 4px;
-  background: #2563eb;
-  transition: width .25s;
+  height:4px;
+  background:#2563eb;
+  transition:width .25s;
 }
 
-/* ====== 缺失的全局样式（补全） ====== */
+/* ====== 其余样式保持不变 ====== */
 :root{
   --bg:#ffffff;
   --text:#111827;
@@ -49,10 +52,7 @@ body{background:var(--bg);color:var(--text);line-height:1.5;}
 .btn{padding:0.75rem 1.5rem;border:1px solid var(--border);background:var(--bg);font-size:1rem;cursor:pointer;}
 .btn--primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 .btn--primary:hover{opacity:0.9;}
-.progress{display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;}
-.progress__txt{font-size:0.875rem;color:#6b7280;}
-/* 进度条宽度已修复，不再贯穿屏幕 */
-#progressInner{height:4px;background:#2563eb;transition:width .25s;}
+.progress__txt{font-size:0.875rem;color:#6b7280;margin-bottom:0.25rem;display:block;}
 .summary{padding:1rem;border:1px solid var(--border);margin-bottom:1.5rem;font-weight:600;}
 .full-row{
   grid-column:1/-1;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
