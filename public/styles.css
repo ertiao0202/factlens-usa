@@ -1,3 +1,19 @@
+/* ====== 进度条修复（你已有） ====== */
+.progress__bar{
+  flex: 1;
+  height: 4px;
+  background: #e5e7eb;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;   /* 切断溢出 */
+}
+#progressInner{
+  height: 4px;
+  background: #2563eb;
+  transition: width .25s;
+}
+
+/* ====== 缺失的全局样式（补全） ====== */
 :root{
   --bg:#ffffff;
   --text:#111827;
@@ -34,8 +50,8 @@ body{background:var(--bg);color:var(--text);line-height:1.5;}
 .btn--primary:hover{opacity:0.9;}
 .progress{display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;}
 .progress__txt{font-size:0.875rem;color:#6b7280;}
-.progress__bar{flex:1;height:4px;background:#e5e7eb;position:relative;}
-#progressInner{transition:width .25s;}
+.progress__bar{flex:1;height:4px;background:#e5e7eb;position:relative;border-radius:4px;overflow:hidden;}
+#progressInner{height:4px;background:#2563eb;transition:width .25s;}
 .summary{padding:1rem;border:1px solid var(--border);margin-bottom:1.5rem;font-weight:600;}
 .full-row{
   grid-column:1/-1;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
